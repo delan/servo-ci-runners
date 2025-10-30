@@ -1,5 +1,24 @@
+use cmd_lib::run_cmd;
 use jane_eyre::eyre;
 use osakit::{self, declare_script};
+use tracing::error;
+
+/// Trigger an automation permission prompt for UTM, on behalf of whatever context the monitor
+/// is running in (sshd-keygen-wrapper, Terminal, etc).
+///
+/// Panics if UTM is not installed or someone chose to deny permission.
+pub fn request_automation_permission() -> eyre::Result<()> {
+    // Not sure why the osakit crate can’t do this.
+    if run_cmd!(osascript -e r#"tell application "UTM""# -e "set vms to virtual machines" -e "end tell").is_err() {
+        error!("Failed to acquire automation permission for UTM!");
+        error!("Either UTM is not installed, or someone chose to deny the permission.");
+        error!("If UTM is installed, try clearing the automation permissions list:");
+        // <https://apple.stackexchange.com/a/360610>
+        error!("$ tccutil reset AppleEvents");
+        panic!("Failed to acquire permission");
+    }
+    Ok(())
+}
 
 pub fn clone_guest(original_guest_name: &str, new_guest_name: &str) -> eyre::Result<()> {
     declare_script! {
