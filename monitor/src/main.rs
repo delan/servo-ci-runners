@@ -7,6 +7,8 @@ mod libvirt;
 mod policy;
 mod runner;
 mod shell;
+#[cfg_attr(not(target_os = "macos"), path = "utm_dummy.rs")]
+mod utm;
 
 use core::str;
 use std::{
