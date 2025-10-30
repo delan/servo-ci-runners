@@ -21,12 +21,16 @@ pub fn request_automation_permission() -> eyre::Result<()> {
         ])
         .spawn()?;
     sleep(Duration::from_millis(250));
+    let mut warned = false;
     let status = loop {
-        match child.try_wait()? {
-            Some(status) => break status,
-            None => warn!("Waiting for permission prompt; please check the macOS UI"),
+        if let Some(status) = child.try_wait()? {
+            break status;
         }
-        sleep(Duration::from_secs(10));
+        if !warned {
+            warn!("Waiting for permission prompt; please check the macOS UI");
+            warned = true;
+        }
+        sleep(Duration::from_millis(250));
     };
     if !status.success() {
         error!("Failed to acquire automation permission for UTM!");
